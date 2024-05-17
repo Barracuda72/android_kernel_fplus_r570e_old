@@ -19,6 +19,14 @@
 
 #include "fbt_cpu.h"
 
+enum FPSGO_CPU_PREFER {
+	FPSGO_PREFER_NONE = 0,
+	FPSGO_PREFER_BIG = 1,
+	FPSGO_PREFER_LITTLE = 2,
+	FPSGO_PREFER_L_M = 3,
+	FPSGO_PREFER_TOTAL,
+};
+
 extern int capacity_min_write_for_perf_idx(int idx, int capacity_min);
 extern void cm_mgr_perf_set_status(int enable);
 extern int set_task_uclamp(pid_t pid, u32 min);
