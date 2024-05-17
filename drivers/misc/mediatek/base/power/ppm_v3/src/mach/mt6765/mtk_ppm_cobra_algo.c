@@ -35,6 +35,13 @@ static int cobra_init_done;
 #define CORE_LIMIT(cluster)	(core_limit_tmp[PPM_CLUSTER_##cluster])
 
 
+struct ppm_cobra_data *ppm_cobra_pass_tbl(void)
+{
+	if (cobra_init_done)
+		return &cobra_tbl;
+	return NULL;
+}
+
 static int get_delta_pwr_LxLL(unsigned int L_core, unsigned int LL_core,
 	unsigned int opp, int prefer)
 {
