@@ -130,7 +130,7 @@ void perf_tracker(u64 wallclock)
 #ifdef CONFIG_MTK_BLOCK_TAG
 	struct mtk_btag_mictx_iostat_struct *iostat = &iostatptr;
 #endif
-	int bw_c, bw_g, bw_mm, bw_total;
+	int bw_c = 0, bw_g = 0, bw_mm = 0, bw_total = 0;
 	int i;
 	int stall[max_cpus] = {0};
 	long mm_available;
@@ -146,10 +146,12 @@ void perf_tracker(u64 wallclock)
 	dram_rate = get_dram_data_rate();
 
 	/* emi */
+  #ifdef CONFIG_MTK_QOS_FRAMEWORK
 	bw_c  = qos_sram_read(QOS_DEBUG_1);
 	bw_g  = qos_sram_read(QOS_DEBUG_2);
 	bw_mm = qos_sram_read(QOS_DEBUG_3);
 	bw_total = qos_sram_read(QOS_DEBUG_0);
+  #endif
 
 	/* sched: cpu freq */
 	sched_freq[0] = get_sched_cur_freq(0);
