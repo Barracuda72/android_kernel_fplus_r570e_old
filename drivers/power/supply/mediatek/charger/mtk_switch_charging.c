@@ -649,6 +649,10 @@ static int mtk_switch_charging_run(struct charger_manager *info)
 			mtk_pe_check_charger(info);
 	}
 
+#if defined(CONFIG_HL7005ALL_CHARGER_SUPPORT) 
+	charger_dev_kick_wdt(info->chg1_dev);
+#endif
+
 	do {
 		switch (swchgalg->state) {
 			chr_err("%s_2 [%d] %d\n", __func__, swchgalg->state,
