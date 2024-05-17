@@ -28,6 +28,7 @@ ccflags-y += -I$(srctree)/drivers/misc/mediatek/gpu/ged/include/
 ccflags-y += -I$(srctree)/drivers/misc/mediatek/base/power/eem_v2/$(MTK_PLATFORM)/inc
 ccflags-y += -I$(srctree)/drivers/misc/mediatek/freqhopping/$(MTK_PLATFORM)/
 ccflags-y += -I$(srctree)/drivers/devfreq/
+ccflags-y += -I$(srctree)/drivers/misc/mediatek/base/power/$(MTK_PLATFORM)
 ccflags-y += -Wno-unused-variable
 ccflags-y += -Wno-unused-function
 

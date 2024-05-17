@@ -20,6 +20,7 @@ ccflags-y += -I$(srctree)/drivers/misc/mediatek/include/mt-plat
 ccflags-y += -I$(srctree)/drivers/misc/mediatek/include/mt-plat/$(MTK_PLATFORM)/include
 ccflags-y += -I$(srctree)/arch/arm/
 ccflags-y += -I$(srctree)/drivers/iommu/
+ccflags-y += -I$(srctree)/drivers/staging/android/ion
 
 ccflags-y += -DION_HISTORY_RECORD
 obj-$(CONFIG_MTK_ION) += ion_history.o

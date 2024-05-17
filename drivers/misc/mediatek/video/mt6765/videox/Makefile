@@ -55,6 +55,7 @@ ccflags-y += -I$(srctree)/drivers/misc/mediatek/video/include/     \
              -I$(srctree)/drivers/misc/mediatek/smi/ \
              -I$(srctree)/drivers/misc/mediatek/dramc/$(MTK_PLATFORM) \
              -I$(srctree)/drivers/misc/mediatek/gpu/ged/include/ \
+             -I$(srctree)/drivers/misc/mediatek/video/$(MTK_PLATFORM)/videox \
              -I$(srctree)/drivers/iommu/
 
 subdir-ccflags-y += -I$(srctree)/drivers/staging/android/ion \

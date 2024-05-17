@@ -23,4 +23,4 @@ ccflags-y += -DNR_FREQ_CPU=16
 
 obj-y += rs_usage.o
 
-obj-$(CONFIG_MACH_MT6779) += platform/mt6779/
+obj-$(CONFIG_MACH_MT6765) += platform/mt6765/

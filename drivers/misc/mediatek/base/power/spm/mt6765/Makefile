@@ -28,6 +28,8 @@ ccflags-y += -I$(srctree)/drivers/misc/mediatek/sspm/
 ccflags-y += -I$(srctree)/drivers/misc/mediatek/sspm/$(MTK_PLATFORM)/
 endif
 
+ccflags-y += -I$(srctree)/drivers/misc/mediatek/base/power/spm/$(MTK_PLATFORM)
+
 obj-y += mtk_spm.o
 obj-y += mtk_spm_twam.o
 obj-y += mtk_spm_irq.o

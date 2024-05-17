@@ -31,7 +31,8 @@ ccflags-y += -I$(srctree)/drivers/misc/mediatek/include/ \
              -I$(srctree)/drivers/misc/mediatek/smi \
              -I$(srctree)/drivers/staging/android/ion \
              -I$(srctree)/drivers/staging/android/ion/mtk \
-             -I$(srctree)/drivers/misc/mediatek/lcm/inc
+             -I$(srctree)/drivers/misc/mediatek/lcm/inc \
+             -I$(srctree)/drivers/misc/mediatek/ext_disp/$(MTK_PLATFORM)
 
 ifeq ($(CONFIG_MACH_MT6761),y)
     ccflags-y += -I$(srctree)/drivers/misc/mediatek/cmdq/v3/mt6765/
