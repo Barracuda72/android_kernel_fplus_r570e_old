@@ -640,7 +640,7 @@ static int fbt_get_dep_list(struct render_info *thr)
 	int pid;
 	int count = 0;
 	int ret_size;
-	struct fpsgo_loading dep_new[MAX_DEP_NUM] = {0};
+	struct fpsgo_loading dep_new[MAX_DEP_NUM] = {{0, 0}};
 	int i, j;
 	struct fpsgo_loading *fl_new, *fl_old;
 	int incr_i, incr_j;
