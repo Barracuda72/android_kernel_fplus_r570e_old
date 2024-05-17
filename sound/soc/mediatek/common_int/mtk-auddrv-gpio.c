@@ -54,6 +54,12 @@
 #include <linux/of.h>
 #include <linux/of_fdt.h>
 
+#if defined(CONFIG_AW8736_SUPPORT)
+#include <linux/module.h>
+static int extspk_mode = CONFIG_AW8736_MODE;
+module_param(extspk_mode,int,0644);
+#endif
+
 #if 1
 struct pinctrl *pinctrlaud;
 
@@ -489,13 +495,16 @@ int AudDrv_GPIO_EXTAMP_Select(int bEnable, int mode)
 	int i;
 	mutex_lock(&gpio_request_mutex);
 	if (bEnable == 1) {
+  	#if defined(CONFIG_AW8736_SUPPORT)
+		extamp_mode = extspk_mode;
+	#else
 		if (mode == 1)
 			extamp_mode = 1;
 		else if (mode == 2)
 			extamp_mode = 2;
 		else
 			extamp_mode = 3; /* default mode is 3 */
-
+    #endif
 		if (aud_gpios[GPIO_EXTAMP_HIGH].gpio_prepare) {
 			for (i = 0; i < extamp_mode; i++) {
 				retval = pinctrl_select_state(
