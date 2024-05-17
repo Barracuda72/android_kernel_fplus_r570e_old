@@ -229,6 +229,12 @@ phys_addr_t gpu_fdvfs_virt_addr; /* for GED, legacy ?! */
  * ===============================================
  */
 
+/* API: pass GPU power table to EARA-QoS */
+struct mt_gpufreq_power_table_info *pass_gpu_table_to_eara(void)
+{
+	return g_power_table;
+}
+
 /*
  * API : handle frequency change request
  */
