@@ -118,11 +118,29 @@ config CRYPTO_DH
 	help
 	  Generic implementation of the Diffie-Hellman algorithm.
 
+config CRYPTO_ECC
+	tristate
+	select CRYPTO_RNG_DEFAULT
+
 config CRYPTO_ECDH
 	tristate "ECDH algorithm"
 	select CRYPTO_KPP
 	help
 	  Generic implementation of the ECDH algorithm
+
+config CRYPTO_ECRDSA
+	tristate "EC-RDSA (Elliptic Curve Russian Digital Signature Algorithm)"
+	select CRYPTO_ECC
+	select CRYPTO_AKCIPHER
+	select CRYPTO_STREEBOG
+	select OID_REGISTRY
+	select ASN1
+	help
+	  Elliptic Curve Russian Digital Signature Algorithm (GOST R 34.10-2012,
+	  RFC 7091, ISO/IEC 14888-3)
+
+	  One of the Russian cryptographic standard algorithms (called GOST
+	  algorithms). Only signature verification is implemented.
 
 config CRYPTO_MANAGER
 	tristate "Cryptographic algorithm manager"
@@ -402,6 +420,20 @@ config CRYPTO_XCBC
 		http://www.ietf.org/rfc/rfc3566.txt
 		http://csrc.nist.gov/encryption/modes/proposedmodes/
 		 xcbc-mac/xcbc-mac-spec.pdf
+
+config CRYPTO_STREEBOG
+	tristate "Streebog"
+	select CRYPTO_HASH
+	help
+	  Streebog Hash Function (GOST R 34.11-2012, RFC 6986, ISO/IEC 10118-3)
+
+	  This is one of the Russian cryptographic standard algorithms (called
+	  GOST algorithms). This setting enables two hash algorithms with
+	  256 and 512 bits output.
+
+	  References:
+	  https://tc26.ru/upload/iblock/fed/feddbb4d26b685903faa2ba11aea43f6.pdf
+	  https://tools.ietf.org/html/rfc6986
 
 config CRYPTO_VMAC
 	tristate "VMAC support"

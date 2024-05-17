@@ -38,6 +38,23 @@ typedef struct {
 	u64 m_high;
 } uint128_t;
 
+#define ECC_POINT_INIT(x, y, ndigits)	(struct ecc_point) { x, y, ndigits }
+
+#define __get_unaligned_t(type, ptr) ({						\
+	const struct { type x; } __packed *__pptr = (typeof(__pptr))(ptr);	\
+	__pptr->x;								\
+})
+
+static inline u64 get_unaligned_be64(const void *p)
+{
+	return be64_to_cpu(__get_unaligned_t(__be64, p));
+}
+
+static inline u64 get_unaligned_le64(const void *p)
+{
+	return le64_to_cpu(__get_unaligned_t(__le64, p));
+}
+
 static inline const struct ecc_curve *ecc_get_curve(unsigned int curve_id)
 {
 	switch (curve_id) {
@@ -110,8 +127,9 @@ static void vli_clear(u64 *vli, unsigned int ndigits)
 		vli[i] = 0;
 }
 
+
 /* Returns true if vli == 0, false otherwise. */
-static bool vli_is_zero(const u64 *vli, unsigned int ndigits)
+bool vli_is_zero(const u64 *vli, unsigned int ndigits)
 {
 	int i;
 
@@ -122,6 +140,27 @@ static bool vli_is_zero(const u64 *vli, unsigned int ndigits)
 
 	return true;
 }
+EXPORT_SYMBOL(vli_is_zero);
+
+void vli_from_be64(u64 *dest, const void *src, unsigned int ndigits)
+{
+	int i;
+	const u64 *from = src;
+
+	for (i = 0; i < ndigits; i++)
+		dest[i] = get_unaligned_be64(&from[ndigits - 1 - i]);
+}
+EXPORT_SYMBOL(vli_from_be64);
+
+void vli_from_le64(u64 *dest, const void *src, unsigned int ndigits)
+{
+	int i;
+	const u64 *from = src;
+
+	for (i = 0; i < ndigits; i++)
+		dest[i] = get_unaligned_le64(&from[i]);
+}
+EXPORT_SYMBOL(vli_from_le64);
 
 /* Returns nonzero if bit bit of vli is set. */
 static u64 vli_test_bit(const u64 *vli, unsigned int bit)
@@ -170,7 +209,7 @@ static void vli_set(u64 *dest, const u64 *src, unsigned int ndigits)
 }
 
 /* Returns sign of left - right. */
-static int vli_cmp(const u64 *left, const u64 *right, unsigned int ndigits)
+int vli_cmp(const u64 *left, const u64 *right, unsigned int ndigits)
 {
 	int i;
 
@@ -183,6 +222,7 @@ static int vli_cmp(const u64 *left, const u64 *right, unsigned int ndigits)
 
 	return 0;
 }
+EXPORT_SYMBOL(vli_cmp);
 
 /* Computes result = in << c, returning carry. Can modify in place
  * (if result == in). 0 < shift < 64.
@@ -239,7 +279,7 @@ static u64 vli_add(u64 *result, const u64 *left, const u64 *right,
 }
 
 /* Computes result = left - right, returning borrow. Can modify in place. */
-static u64 vli_sub(u64 *result, const u64 *left, const u64 *right,
+u64 vli_sub(u64 *result, const u64 *left, const u64 *right,
 		   unsigned int ndigits)
 {
 	u64 borrow = 0;
@@ -257,6 +297,7 @@ static u64 vli_sub(u64 *result, const u64 *left, const u64 *right,
 
 	return borrow;
 }
+EXPORT_SYMBOL(vli_sub);
 
 static uint128_t mul_64_64(u64 left, u64 right)
 {
@@ -556,7 +597,7 @@ static void vli_mod_square_fast(u64 *result, const u64 *left,
  * See "From Euclid's GCD to Montgomery Multiplication to the Great Divide"
  * https://labs.oracle.com/techrep/2001/smli_tr-2001-95.pdf
  */
-static void vli_mod_inv(u64 *result, const u64 *input, const u64 *mod,
+void vli_mod_inv(u64 *result, const u64 *input, const u64 *mod,
 			unsigned int ndigits)
 {
 	u64 a[ndigits], b[ndigits];
@@ -629,6 +670,67 @@ static void vli_mod_inv(u64 *result, const u64 *input, const u64 *mod,
 
 	vli_set(result, u, ndigits);
 }
+EXPORT_SYMBOL(vli_mod_inv);
+
+/*
+ * Computes result = product % mod, where product is 2N words long.
+ * Reference: Ken MacKay's micro-ecc.
+ * Currently only designed to work for curve_p or curve_n.
+ */
+static void vli_mmod_slow(u64 *result, u64 *product, const u64 *mod,
+			  unsigned int ndigits)
+{
+	u64 mod_m[2 * ECC_MAX_DIGITS];
+	u64 tmp[2 * ECC_MAX_DIGITS];
+	u64 *v[2] = { tmp, product };
+	u64 carry = 0;
+	unsigned int i;
+	/* Shift mod so its highest set bit is at the maximum position. */
+	int shift = (ndigits * 2 * 64) - vli_num_bits(mod, ndigits);
+	int word_shift = shift / 64;
+	int bit_shift = shift % 64;
+
+	vli_clear(mod_m, word_shift);
+	if (bit_shift > 0) {
+		for (i = 0; i < ndigits; ++i) {
+			mod_m[word_shift + i] = (mod[i] << bit_shift) | carry;
+			carry = mod[i] >> (64 - bit_shift);
+		}
+	} else
+		vli_set(mod_m + word_shift, mod, ndigits);
+
+	for (i = 1; shift >= 0; --shift) {
+		u64 borrow = 0;
+		unsigned int j;
+
+		for (j = 0; j < ndigits * 2; ++j) {
+			u64 diff = v[i][j] - mod_m[j] - borrow;
+
+			if (diff != v[i][j])
+				borrow = (diff > v[i][j]);
+			v[1 - i][j] = diff;
+		}
+		i = !(i ^ borrow); /* Swap the index if there was no borrow */
+		vli_rshift1(mod_m, ndigits);
+		mod_m[ndigits - 1] |= mod_m[ndigits] << (64 - 1);
+		vli_rshift1(mod_m + ndigits, ndigits);
+	}
+	vli_set(result, v[i], ndigits);
+}
+
+
+/* Computes result = (left * right) % mod.
+ * Assumes that mod is big enough curve order.
+ */
+void vli_mod_mult_slow(u64 *result, const u64 *left, const u64 *right,
+		       const u64 *mod, unsigned int ndigits)
+{
+	u64 product[ECC_MAX_DIGITS * 2];
+
+	vli_mult(product, left, right, ndigits);
+	vli_mmod_slow(result, product, mod, ndigits);
+}
+EXPORT_SYMBOL(vli_mod_mult_slow);
 
 /* ------ Point operations ------ */
 
@@ -1016,3 +1118,116 @@ err_alloc_product:
 out:
 	return ret;
 }
+
+/* Computes R = P + Q mod p */
+static void ecc_point_add(const struct ecc_point *result,
+		   const struct ecc_point *p, const struct ecc_point *q,
+		   const struct ecc_curve *curve)
+{
+	u64 z[ECC_MAX_DIGITS];
+	u64 px[ECC_MAX_DIGITS];
+	u64 py[ECC_MAX_DIGITS];
+	unsigned int ndigits = curve->g.ndigits;
+
+	vli_set(result->x, q->x, ndigits);
+	vli_set(result->y, q->y, ndigits);
+	vli_mod_sub(z, result->x, p->x, curve->p, ndigits);
+	vli_set(px, p->x, ndigits);
+	vli_set(py, p->y, ndigits);
+	xycz_add(px, py, result->x, result->y, curve->p, ndigits);
+	vli_mod_inv(z, z, curve->p, ndigits);
+	apply_z(result->x, result->y, z, curve->p, ndigits);
+}
+
+/* Computes R = u1P + u2Q mod p using Shamir's trick.
+ * Based on: Kenneth MacKay's micro-ecc (2014).
+ */
+void ecc_point_mult_shamir(const struct ecc_point *result,
+			   const u64 *u1, const struct ecc_point *p,
+			   const u64 *u2, const struct ecc_point *q,
+			   const struct ecc_curve *curve)
+{
+	u64 z[ECC_MAX_DIGITS];
+	u64 sump[2][ECC_MAX_DIGITS];
+	u64 *rx = result->x;
+	u64 *ry = result->y;
+	unsigned int ndigits = curve->g.ndigits;
+	unsigned int num_bits;
+	struct ecc_point sum = ECC_POINT_INIT(sump[0], sump[1], ndigits);
+	const struct ecc_point *points[4];
+	const struct ecc_point *point;
+	unsigned int idx;
+	int i;
+
+	ecc_point_add(&sum, p, q, curve);
+	points[0] = NULL;
+	points[1] = p;
+	points[2] = q;
+	points[3] = &sum;
+
+	num_bits = max(vli_num_bits(u1, ndigits), vli_num_bits(u2, ndigits));
+	i = num_bits - 1;
+	idx = !!vli_test_bit(u1, i);
+	idx |= (!!vli_test_bit(u2, i)) << 1;
+	point = points[idx];
+
+	vli_set(rx, point->x, ndigits);
+	vli_set(ry, point->y, ndigits);
+	vli_clear(z + 1, ndigits - 1);
+	z[0] = 1;
+
+	for (--i; i >= 0; i--) {
+		ecc_point_double_jacobian(rx, ry, z, curve->p, ndigits);
+		idx = !!vli_test_bit(u1, i);
+		idx |= (!!vli_test_bit(u2, i)) << 1;
+		point = points[idx];
+		if (point) {
+			u64 tx[ECC_MAX_DIGITS];
+			u64 ty[ECC_MAX_DIGITS];
+			u64 tz[ECC_MAX_DIGITS];
+
+			vli_set(tx, point->x, ndigits);
+			vli_set(ty, point->y, ndigits);
+			apply_z(tx, ty, z, curve->p, ndigits);
+			vli_mod_sub(tz, rx, tx, curve->p, ndigits);
+			xycz_add(tx, ty, rx, ry, curve->p, ndigits);
+			vli_mod_mult_fast(z, z, tz, curve->p, ndigits);
+		}
+	}
+	vli_mod_inv(z, z, curve->p, ndigits);
+	apply_z(rx, ry, z, curve->p, ndigits);
+}
+EXPORT_SYMBOL(ecc_point_mult_shamir);
+
+/* SP800-56A section 5.6.2.3.4 partial verification: ephemeral keys only */
+int ecc_is_pubkey_valid_partial(const struct ecc_curve *curve,
+				struct ecc_point *pk)
+{
+	u64 yy[ECC_MAX_DIGITS], xxx[ECC_MAX_DIGITS], w[ECC_MAX_DIGITS];
+
+	if (WARN_ON(pk->ndigits != curve->g.ndigits))
+		return -EINVAL;
+
+	/* Check 1: Verify key is not the zero point. */
+	if (ecc_point_is_zero(pk))
+		return -EINVAL;
+
+	/* Check 2: Verify key is in the range [1, p-1]. */
+	if (vli_cmp(curve->p, pk->x, pk->ndigits) != 1)
+		return -EINVAL;
+	if (vli_cmp(curve->p, pk->y, pk->ndigits) != 1)
+		return -EINVAL;
+
+	/* Check 3: Verify that y^2 == (x^3 + a·x + b) mod p */
+	vli_mod_square_fast(yy, pk->y, curve->p, pk->ndigits); /* y^2 */
+	vli_mod_square_fast(xxx, pk->x, curve->p, pk->ndigits); /* x^2 */
+	vli_mod_mult_fast(xxx, xxx, pk->x, curve->p, pk->ndigits); /* x^3 */
+	vli_mod_mult_fast(w, curve->a, pk->x, curve->p, pk->ndigits); /* a·x */
+	vli_mod_add(w, w, curve->b, curve->p, pk->ndigits); /* a·x + b */
+	vli_mod_add(w, w, xxx, curve->p, pk->ndigits); /* x^3 + a·x + b */
+	if (vli_cmp(yy, w, pk->ndigits) != 0) /* Equation */
+		return -EINVAL;
+
+	return 0;
+}
+EXPORT_SYMBOL(ecc_is_pubkey_valid_partial);

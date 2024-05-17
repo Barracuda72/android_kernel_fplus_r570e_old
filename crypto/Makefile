@@ -71,6 +71,7 @@ obj-$(CONFIG_CRYPTO_RMD320) += rmd320.o
 obj-$(CONFIG_CRYPTO_SHA1) += sha1_generic.o
 obj-$(CONFIG_CRYPTO_SHA256) += sha256_generic.o
 obj-$(CONFIG_CRYPTO_SHA512) += sha512_generic.o
+obj-$(CONFIG_CRYPTO_STREEBOG) += streebog_generic.o
 obj-$(CONFIG_CRYPTO_SHA3) += sha3_generic.o
 obj-$(CONFIG_CRYPTO_WP512) += wp512.o
 CFLAGS_wp512.o := $(call cc-option,-fno-schedule-insns)  # https://gcc.gnu.org/bugzilla/show_bug.cgi?id=79149
@@ -85,6 +86,7 @@ obj-$(CONFIG_CRYPTO_XTS) += xts.o
 obj-$(CONFIG_CRYPTO_CTR) += ctr.o
 obj-$(CONFIG_CRYPTO_KEYWRAP) += keywrap.o
 obj-$(CONFIG_CRYPTO_GCM) += gcm.o
+#obj-$(CONFIG_CRYPTO_ECC) += ecc.o
 obj-$(CONFIG_CRYPTO_CCM) += ccm.o
 obj-$(CONFIG_CRYPTO_CHACHA20POLY1305) += chacha20poly1305.o
 obj-$(CONFIG_CRYPTO_PCRYPT) += pcrypt.o
@@ -135,6 +137,16 @@ obj-$(CONFIG_CRYPTO_USER_API_HASH) += algif_hash.o
 obj-$(CONFIG_CRYPTO_USER_API_SKCIPHER) += algif_skcipher.o
 obj-$(CONFIG_CRYPTO_USER_API_RNG) += algif_rng.o
 obj-$(CONFIG_CRYPTO_USER_API_AEAD) += algif_aead.o
+
+$(obj)/ecrdsa_params-asn1.o: $(obj)/ecrdsa_params-asn1.c $(obj)/ecrdsa_params-asn1.h
+$(obj)/ecrdsa_pub_key-asn1.o: $(obj)/ecrdsa_pub_key-asn1.c $(obj)/ecrdsa_pub_key-asn1.h
+$(obj)/ecrdsa.o: $(obj)/ecrdsa_params-asn1.h $(obj)/ecrdsa_pub_key-asn1.h
+ecrdsa_generic-y += ecrdsa.o
+ecrdsa_generic-y += ecrdsa_params-asn1.o
+ecrdsa_generic-y += ecrdsa_pub_key-asn1.o
+obj-$(CONFIG_CRYPTO_ECRDSA) += ecrdsa_generic.o
+clean-files += ecrdsa_params-asn1.c ecrdsa_params-asn1.h
+clean-files += ecrdsa_pub_key-asn1.c ecrdsa_pub_key-asn1.h
 
 #
 # generic algorithms and the async_tx api
