@@ -193,7 +193,7 @@ st54spi_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos)
 
 	st54spi = filp->private_data;
 
-        if (debug_enabled) pr_info("st54spi Read: %d bytes\n", count);
+        if (debug_enabled) pr_info("st54spi Read: %d bytes\n", (int)count);
 
 	mutex_lock(&st54spi->buf_lock);
 	status = st54spi_sync_read(st54spi, count);
@@ -208,7 +208,7 @@ st54spi_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos)
 	}
 	mutex_unlock(&st54spi->buf_lock);
 
-        if (debug_enabled) pr_info("st54spi Read: status: %d\n", status);
+        if (debug_enabled) pr_info("st54spi Read: status: %d\n", (int)status);
 
 	return status;
 }
@@ -228,7 +228,7 @@ st54spi_write(struct file *filp, const char __user *buf,
 
 	st54spi = filp->private_data;
 
-        if (debug_enabled) pr_info("st54spi Write: %d bytes\n", count);
+        if (debug_enabled) pr_info("st54spi Write: %d bytes\n", (int)count);
 
 	mutex_lock(&st54spi->buf_lock);
 	missing = copy_from_user(st54spi->tx_buffer, buf, count);
@@ -238,7 +238,7 @@ st54spi_write(struct file *filp, const char __user *buf,
 		status = -EFAULT;
 	mutex_unlock(&st54spi->buf_lock);
 
-        if (debug_enabled) pr_info("st54spi Write: status: %d\n", status);
+        if (debug_enabled) pr_info("st54spi Write: status: %d\n", (int)status);
 
 	return status;
 }
