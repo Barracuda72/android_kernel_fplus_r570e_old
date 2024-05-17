@@ -31,13 +31,15 @@
 #include "mtk_ppm_platform.h"
 #include "mtk_ppm_internal.h"
 
+#include "mtk_upower.h"
+#include "mtk_gpufreq.h"
+
 #ifdef CONFIG_MTK_PERF_OBSERVER
 #include <mt-plat/mtk_perfobserver.h>
 #include "rs_pfm.h"
 #endif
 #include "thermal_budget_platform.h"
 #include "thermal_budget.h"
-
 
 #if defined(CONFIG_MTK_VPU_SUPPORT) && defined(THERMAL_VPU_SUPPORT)
 #define EARA_THERMAL_VPU_SUPPORT
@@ -176,12 +178,6 @@ struct thrm_pb_realloc {
 	int frame_time;
 };
 
-struct thrm_pb_ratio {
-	int ratio;
-	int vpu_power;
-	int mdla_power;
-};
-
 struct dentry *eara_thrm_debugfs_dir;
 
 static struct apthermolmt_user ap_eara;
@@ -193,6 +189,7 @@ static struct mt_gpufreq_power_table_info *thr_gpu_tbl;
 static int g_cluster_num;
 static int g_modules_num;
 static int g_gpu_opp_num;
+static int g_max_gpu_opp_idx;
 
 static int is_enable;
 static int is_throttling;
@@ -249,6 +246,12 @@ static struct thrm_pb_ratio *g_opp_ratio;
 static int *g_mod_opp;
 static int *g_active_core;
 static int *g_core_limit;
+
+void  __attribute__((weak))
+eara_pass_perf_first_hint(int enable)
+{
+  pr_notice("E_WF: %s doesn't exist\n", __func__);
+}
 
 static unsigned long long get_time(void)
 {
@@ -375,50 +378,6 @@ static void get_cobra_tbl(void)
 	memcpy(thr_cobra_tbl, cobra_tbl, sizeof(*cobra_tbl));
 }
 
-static void __alloc_gpu_tbl(void)
-{
-	/*
-	 * Bind @thr_gpu_tbl, @g_opp_ratio and @g_gpu_opp_num together.
-	 * JUST check one of them to know if initialized or not.
-	 */
-
-	if (thr_gpu_tbl)
-		return;
-
-	g_gpu_opp_num = mt_gpufreq_get_dvfs_table_num();
-	if (!g_gpu_opp_num)
-		return;
-
-	thr_gpu_tbl = kcalloc(g_gpu_opp_num, sizeof(*thr_gpu_tbl), GFP_KERNEL);
-	g_opp_ratio = kcalloc(g_gpu_opp_num,
-			sizeof(struct thrm_pb_ratio), GFP_KERNEL);
-
-	if (!thr_gpu_tbl || !g_opp_ratio) {
-		kfree(thr_gpu_tbl);
-		thr_gpu_tbl = NULL;
-		kfree(g_opp_ratio);
-		g_opp_ratio = NULL;
-		g_gpu_opp_num = 0;
-	}
-}
-
-static void __update_gpu_tbl(void)
-{
-	/* should be locked unless init */
-
-	struct mt_gpufreq_power_table_info *tbl;
-
-	__alloc_gpu_tbl();
-	if (!thr_gpu_tbl)
-		return;
-
-	tbl = pass_gpu_table_to_eara();
-	if (!tbl)
-		return;
-
-	memcpy(thr_gpu_tbl, tbl, g_gpu_opp_num * sizeof(*tbl));
-}
-
 static void activate_timer_locked(void)
 {
 	unsigned long expire;
@@ -448,7 +407,8 @@ static void wq_func(unsigned long data)
 	if (cur_ts < TIME_1S)
 		goto next;
 
-	__update_gpu_tbl();
+  eara_thrm_update_gpu_info(&g_gpu_opp_num, &g_max_gpu_opp_idx,
+			&thr_gpu_tbl, &g_opp_ratio);
 
 	for (n = rb_first(&render_list); n; n = next) {
 		next = rb_next(n);
@@ -799,7 +759,8 @@ static void thrm_pb_turn_record_locked(int input)
 	has_record = input;
 
 	if (input) {
-		__update_gpu_tbl();
+    eara_thrm_update_gpu_info(&g_gpu_opp_num, &g_max_gpu_opp_idx,
+			&thr_gpu_tbl, &g_opp_ratio);
 		if (!is_timer_active)
 			activate_timer_locked();
 	} else {
@@ -1114,16 +1075,16 @@ static short get_delta_pwr(enum THRM_MODULE module, unsigned int core,
 
 	if (opp == CPU_OPP_NUM - 1) {
 		delta_pwr = (core == 1)
-			? thr_cobra_tbl->basic_pwr_tbl
+			? thr_cobra_tbl->ptbl
 				[idx+core-1][cur_opp].power_idx
-			: (thr_cobra_tbl->basic_pwr_tbl
+			: (thr_cobra_tbl->ptbl
 				[idx+core-1][cur_opp].power_idx
-				- thr_cobra_tbl->basic_pwr_tbl
+				- thr_cobra_tbl->ptbl
 				[idx+core-2][cur_opp].power_idx);
 	} else {
-		delta_pwr = thr_cobra_tbl->basic_pwr_tbl
+		delta_pwr = thr_cobra_tbl->ptbl
 				[idx+core-1][cur_opp].power_idx
-				- thr_cobra_tbl->basic_pwr_tbl
+				- thr_cobra_tbl->ptbl
 				[idx+core-1][prev_opp].power_idx;
 	}
 
@@ -1164,8 +1125,8 @@ static int get_perf(enum ppm_cluster cluster, unsigned int core,
 
 	idx = get_idx_in_pwr_tbl(cluster);
 
-	perf = thr_cobra_tbl->basic_pwr_tbl[idx+core-1][opp].perf_idx *
-		thr_cobra_tbl->basic_pwr_tbl[idx][opp].perf_idx;
+	perf = thr_cobra_tbl->ptbl[idx+core-1][opp].perf_idx *
+		thr_cobra_tbl->ptbl[idx][opp].perf_idx;
 
 	if (ratio)
 		perf = perf * ratio;
@@ -2044,7 +2005,7 @@ void eara_thrm_pb_enqueue_end(int pid, int gpu_time,
 				- g_opp_ratio[best_gpu_opp].mdla_power;
 
 		if (new_cpu_power <=
-			thr_cobra_tbl->basic_pwr_tbl
+			thr_cobra_tbl->ptbl
 				[0][CPU_OPP_NUM - 1].power_idx)
 			goto CAN_NOT_CONTROL;
 
@@ -2297,7 +2258,8 @@ static int eara_thrm_table_show(struct seq_file *m, void *unused)
 	seq_printf(m, "CPU_OFFSET: %d\n", THRM_CPU_OFFSET);
 
 	get_cobra_tbl();
-	__update_gpu_tbl();
+  eara_thrm_update_gpu_info(&g_gpu_opp_num, &g_max_gpu_opp_idx,
+			&thr_gpu_tbl, &g_opp_ratio);
 	if (!thr_cobra_tbl || !thr_gpu_tbl) {
 		mutex_unlock(&thrm_lock);
 		return 0;
@@ -2307,8 +2269,8 @@ static int eara_thrm_table_show(struct seq_file *m, void *unused)
 	for (i = 0; i < CPU_CORE_NUM; i++) {
 		for (j = 0; j < CPU_OPP_NUM; j++) {
 			seq_printf(m, "(%2d, %2d) = (%4d, %4d)\n", i, j,
-				thr_cobra_tbl->basic_pwr_tbl[i][j].power_idx,
-				thr_cobra_tbl->basic_pwr_tbl[i][j].perf_idx);
+				thr_cobra_tbl->ptbl[i][j].power_idx,
+				thr_cobra_tbl->ptbl[i][j].perf_idx);
 		}
 	}
 
@@ -2508,7 +2470,8 @@ static ssize_t eara_thrm_test_write(struct file *flip, const char *ubuf,
 	ut_opp[THRM_MDLA] = -1;
 
 	get_cobra_tbl();
-	__update_gpu_tbl();
+  eara_thrm_update_gpu_info(&g_gpu_opp_num, &g_max_gpu_opp_idx,
+			&thr_gpu_tbl, &g_opp_ratio);
 	if (!thr_cobra_tbl || !thr_gpu_tbl)
 		return -EAGAIN;
 
@@ -2651,7 +2614,8 @@ static void update_mdla_info(void)
 static void get_power_tbl(void)
 {
 	update_cpu_info();
-	__update_gpu_tbl();
+  eara_thrm_update_gpu_info(&g_gpu_opp_num, &g_max_gpu_opp_idx,
+			&thr_gpu_tbl, &g_opp_ratio);
 	update_vpu_info();
 	update_mdla_info();
 
