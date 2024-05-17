@@ -301,6 +301,9 @@ extern struct LCM_DRIVER hx83112b_fhdp_dsi_cmd_auo_rt4801_lcm_drv;
 extern struct LCM_DRIVER hx83112b_fhdp_dsi_cmd_fhd_auo_rt4801_lcm_drv;
 extern struct LCM_DRIVER hx83112b_fhdp_dsi_vdo_auo_rt4801_lcm_drv;
 extern struct LCM_DRIVER sofeg01_fhdplus_dsi_cmd_samsung_lcm_drv;
+extern struct LCM_DRIVER nv3051f_hdplus_dsi_vdo_hq_lcm_drv;
+extern struct LCM_DRIVER jd9366d_hdplus_dsi_vdo_dzx_lcm_drv;
+extern struct LCM_DRIVER jd9366z_hdplus_dsi_vdo_dzx_lcm_drv;
 extern struct LCM_DRIVER virtual_dsi_vdo_default;
 #ifdef BUILD_LK
 extern void mdelay(unsigned long msec);

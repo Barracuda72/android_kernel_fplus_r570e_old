@@ -1146,6 +1146,9 @@ struct LCM_DRIVER *lcm_driver_list[] = {
 #if defined(VIRTUAL_DSI_VDO_DEFAULT)
 	 &virtual_dsi_vdo_default,
 #endif
+   &nv3051f_hdplus_dsi_vdo_hq_lcm_drv,
+   &jd9366d_hdplus_dsi_vdo_dzx_lcm_drv,
+   &jd9366z_hdplus_dsi_vdo_dzx_lcm_drv,
 };
 
 unsigned char lcm_name_list[][128] = {
@@ -1211,6 +1214,9 @@ unsigned char lcm_name_list[][128] = {
 #if defined(NT35695B_FHD_DSI_VDO_AUO_RT5081_HDP)
 	"nt35695B_fhd_dsi_vdo_auo_rt5081_hdp_drv",
 #endif
+  "nv3051f_hdplus_dsi_vdo_hq",
+  "jd9366d_hdplus_dsi_vdo_dzx",
+  "jd9366z_hdplus_dsi_vdo_dzx",
 };
 
 #define LCM_COMPILE_ASSERT(condition) \
