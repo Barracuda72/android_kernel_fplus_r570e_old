@@ -27,6 +27,7 @@
 #include <mtk_qos_sram.h>
 #endif
 
+#include "lowmem_hint.h"
 #include "perf_tracker.h"
 
 static int perf_tracker_on, perf_tracker_init;
@@ -170,6 +171,8 @@ void perf_tracker(u64 wallclock)
 	/* free mem */
 	mm_free_pages = global_page_state(NR_FREE_PAGES);
 	mm_available = si_mem_available();
+
+  trigger_lowmem_hint(&mm_available, &mm_free_pages);
 
 #ifdef CONFIG_MTK_BLOCK_TAG
 	/* IO stat */

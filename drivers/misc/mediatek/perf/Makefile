@@ -17,6 +17,7 @@ ccflags-y += -I$(srctree)/drivers/misc/mediatek/dramc/$(MTK_PLATFORM)/
 ccflags-y += -I$(srctree)/drivers/misc/mediatek/base/power/include/vcorefs_v3/
 ccflags-y += -I$(srctree)/drivers/devfreq/
 ccflags-y += -I$(srctree)/drivers/misc/mediatek/base/power/qos/$(MTK_PLATFORM)/
+ccflags-y += -I$(srctree)/drivers/misc/mediatek/perf
 
 #ccflags-y += \
 #	-I$(srctree)/drivers/misc/mediatek/base/power/cm_mgr_v1/ \
@@ -25,4 +26,5 @@ ccflags-y += -I$(srctree)/drivers/misc/mediatek/base/power/qos/$(MTK_PLATFORM)/
 
 # a tracker for performance index
 obj-$(CONFIG_MTK_PERF_TRACKER) += perf_tracker.o
-
+#obj-y += perf_common.o
+obj-$(CONFIG_MTK_LOWMEM_HINT) += lowmem_hint.o
