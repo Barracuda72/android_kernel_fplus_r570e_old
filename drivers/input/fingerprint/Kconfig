@@ -12,6 +12,12 @@ config MTK_FINGERPRINT_SUPPORT
 	  Say Y here if you want to use mediatek fingerprint driver,
 	  fingerprint driver will support fingerprint function
 
+config NAVIGATION_FUNCTION 
+	bool "Sunwave Fingerprint"
+	default y
+	help
+	  Navigation function up f1 down f2 left f3 right f4
+
 config WT_FINGERPRINT_SUPPORT
 	bool "WT Fingerprint"
 	default n
@@ -23,8 +29,15 @@ config WT_FINGERPRINT_SUPPORT
 if MTK_FINGERPRINT_SUPPORT
 config MTK_FINGERPRINT_SELECT
 	string "sensor type"
-	default "GF318M"
+	default "sunwavecorp_fp"
 
+if MTK_FINGERPRINT_SELECT = "sunwavecorp_fp"
+  config SUNWAVE_FINGERPRINT
+     bool "SUNWAVE Fingerprint"
+     default y
+     help
+       MICROARRAY fingerprint SUNWAVE's device.
+endif
 
 if MTK_FINGERPRINT_SELECT = "FPC1145"
 config FPC_FINGERPRINT
