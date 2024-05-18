@@ -422,6 +422,16 @@ enum {
 
 #define IFLA_VRF_PORT_MAX (__IFLA_VRF_PORT_MAX - 1)
 
+/* XFRM section */
+enum {
+	IFLA_XFRM_UNSPEC,
+	IFLA_XFRM_LINK,
+	IFLA_XFRM_IF_ID,
+	__IFLA_XFRM_MAX
+};
+
+#define IFLA_XFRM_MAX (__IFLA_XFRM_MAX - 1)
+
 /* MACSEC section */
 enum {
 	IFLA_MACSEC_UNSPEC,
