@@ -1216,4 +1216,13 @@ config TOUCHSCREEN_ROHM_BU21023
 	  To compile this driver as a module, choose M here: the
 	  module will be called bu21023_ts.
 
+config TOUCHSCREEN_CHSC5XXX
+	bool "CHSC5XXX for Mediatek package"
+	default n
+	help
+	  Say Y here if you have CHSC5XXX touch panel.
+	  If unsure, say N.
+	  To compile this dirver as a module, choose M here: the
+	  module will be called.
+
 endif
