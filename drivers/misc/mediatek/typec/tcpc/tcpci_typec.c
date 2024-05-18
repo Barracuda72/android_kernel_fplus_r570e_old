@@ -682,6 +682,10 @@ static inline void typec_source_attached_entry(struct tcpc_device *tcpc_dev)
 	typec_enable_vconn(tcpc_dev);
 	tcpci_source_vbus(tcpc_dev,
 			TCP_VBUS_CTRL_TYPEC, TCPC_VBUS_SOURCE_5V, -1);
+
+  #if defined(CONFIG_TCPC_WUSB3801)
+	tcpc_enable_timer(tcpc_dev, TYPEC_TIMER_VBUS_CHECK);
+  #endif
 }
 
 static inline void typec_sink_attached_entry(struct tcpc_device *tcpc_dev)
@@ -2187,6 +2191,10 @@ static inline int typec_handle_role_swap_stop(struct tcpc_device *tcpc_dev)
 }
 #endif	/* CONFIG_TYPEC_CAP_ROLE_SWAP */
 
+#if defined(CONFIG_TCPC_WUSB3801)
+extern int battery_get_vbus(void);
+#endif
+
 int tcpc_typec_handle_timeout(struct tcpc_device *tcpc_dev, uint32_t timer_id)
 {
 	int ret = 0;
@@ -2317,6 +2325,15 @@ int tcpc_typec_handle_timeout(struct tcpc_device *tcpc_dev, uint32_t timer_id)
 #endif	/* CONFIG_TYPEC_LEGACY2_AUTO_RECYCLE */
 #endif	/* CONFIG_TYPEC_CHECK_LEGACY_CABLE2 */
 #endif	/* CONFIG_TYPEC_CHECK_LEGACY_CABLE */
+
+#if defined(CONFIG_TCPC_WUSB3801)
+	case TYPEC_TIMER_VBUS_CHECK:
+		printk("HH %s: vbus:%d\n",__func__,battery_get_vbus());
+		if (battery_get_vbus() > 3500){
+			tcpc_typec_handle_ps_change(tcpc_dev, TCPC_VBUS_VALID);
+		}
+		break;
+#endif
 	}
 
 	return ret;

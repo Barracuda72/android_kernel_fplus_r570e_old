@@ -229,6 +229,9 @@ static const char *const tcpc_timer_name[] = {
 #ifdef CONFIG_TYPEC_CAP_NORP_SRC
 	"TYPEC_TIMER_NORP_SRC",
 #endif	/* CONFIG_TYPEC_CAP_NORP_SRC */
+#if defined(CONFIG_TCPC_WUSB3801)
+	"TYPEC_TIMER_VBUS_CHECK",
+#endif
 };
 /* CONFIG_USB_PD_SAFE0V_DELAY */
 #ifdef CONFIG_TCPC_VSAFE0V_DETECT
@@ -368,6 +371,9 @@ DECL_TCPC_TIMEOUT(TYPEC_TIMER_DRP_SRC_TOGGLE, 60),
 #ifdef CONFIG_TYPEC_CAP_NORP_SRC
 DECL_TCPC_TIMEOUT(TYPEC_TIMER_NORP_SRC, 300),
 #endif	/* CONFIG_TYPEC_CAP_NORP_SRC */
+#if defined(CONFIG_TCPC_WUSB3801)
+DECL_TCPC_TIMEOUT(TYPEC_TIMER_VBUS_CHECK, 200),
+#endif
 };
 
 typedef enum hrtimer_restart (*tcpc_hrtimer_call)(struct hrtimer *timer);
@@ -1094,6 +1100,18 @@ static enum hrtimer_restart tcpc_timer_norp_src(struct hrtimer *timer)
 }
 #endif	/* CONFIG_TYPEC_CAP_NORP_SRC */
 
+#if defined(CONFIG_TCPC_WUSB3801)
+static enum hrtimer_restart tcpc_timer_vbus_check(struct hrtimer *timer)
+{
+	int index = TYPEC_TIMER_VBUS_CHECK;
+	struct tcpc_device *tcpc_dev =
+		container_of(timer, struct tcpc_device, tcpc_timer[index]);
+
+	TCPC_TIMER_TRIGGER();
+	return HRTIMER_NORESTART;
+}
+#endif
+
 static tcpc_hrtimer_call tcpc_timer_call[PD_TIMER_NR] = {
 #ifdef CONFIG_USB_POWER_DELIVERY
 	tcpc_timer_discover_id,
@@ -1183,6 +1201,9 @@ static tcpc_hrtimer_call tcpc_timer_call[PD_TIMER_NR] = {
 	tcpc_timer_drp_src_toggle,
 #ifdef CONFIG_TYPEC_CAP_NORP_SRC
 	tcpc_timer_norp_src,
+#endif
+#if defined(CONFIG_TCPC_WUSB3801)
+	tcpc_timer_vbus_check,
 #endif
 };
 
