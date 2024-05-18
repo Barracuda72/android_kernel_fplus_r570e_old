@@ -107,7 +107,7 @@ config MTK_SMART_BATTERY
 	  It maintais both charger and battery status.
 	  It also includes Mediatek gas gauge.
 
-config CHARGER_HL7005
+config HL7005ALL_CHARGER_SUPPORT
 	bool "Charger Driver for Halo HL7005 Charger IC"
 	default n
 	depends on MTK_SWCHR_SUPPORT
