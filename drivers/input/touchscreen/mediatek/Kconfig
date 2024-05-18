@@ -41,6 +41,15 @@ config TOUCHSCREEN_MTK_SOLOMON
 	  To compile this dirver as a module, choose M here: the
 	  module will be called.
 
+config TOUCHSCREEN_MTK_GT1X_V14
+	bool "GT1X_V14 for Mediatek package"
+	default n
+	help
+	  Say Y here if you have GT1X_V14 touch panel.
+	  If unsure, say N.
+	  To compile this dirver as a module, choose M here: the
+	  module will be called.
+
 source "drivers/input/touchscreen/mediatek/SOLOMON/Kconfig"
 
 config TOUCHSCREEN_MTK_FOCALTECH_TS
