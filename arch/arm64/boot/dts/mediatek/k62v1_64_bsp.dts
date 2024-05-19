@@ -239,13 +239,14 @@
 	};
 };
 
+/*
 &goodix_fp {
 	pinctrl-names = "default", "reset_high", "reset_low";
 	pinctrl-0 = <&fingerprint_default>;
 	pinctrl-1 = <&fingerprint_reset_high>;
 	pinctrl-2 = <&fingerprint_reset_low>;
 	status = "okay";
-};
+};*/
 
 &pio {
 	fingerprint_default: state_default {

@@ -36,7 +36,7 @@
 			compatible = "mediatek,mt6370_pmu_charger";
 			interrupt-names = "chg_mivr", "chg_aiclmeasi",
 				"attachi","ovpctrl_uvp_d_evt", "chg_wdtmri",
-				"chg_vbusov","chg_tmri", "chg_treg";
+				"chg_vbusov","chg_tmri", "chg_treg", "dcdti";
 			charger_name = "primary_chg";
 			load_switch_name = "primary_load_switch";
 			ichg = <2000000>;	/* uA */
@@ -50,6 +50,8 @@
 			ircmp_vclamp = <32000>;		/* uV */
 			enable_te;
 			enable_wdt;
+      lbp_hys_sel = <1>;
+      lbp_dt = <1>;
 			/* enable_polling; */	/* is this charger needs*/
 						/* polling */
 		};
@@ -145,7 +147,7 @@
 						/* 2: 160ns */
 						/* 3: 200ns */
 			mt,pwm_hys_en = <1>;	/* PWM Input Hysteresis */
-			mt,pwm_hys = <1>;	/* 0: 1 bit */
+			mt,pwm_hys = <0>;	/* 0: 1 bit */
 						/* 1: 2 bit */
 						/* 2: 4 bit */
 						/* 3: 6 bit */
@@ -164,7 +166,8 @@
 
 			/* we have 11 bit resolution, quantize in driver */
 			mt,max_bled_brightness = <512>; /* maximum 2047 */
-
+      mt,bled_curr_scale = <0x00>;
+      mt,pwm_lpf_coef = <0x00>;
 		};
 		dsv {
 			compatible = "mediatek,mt6370_pmu_dsv";
