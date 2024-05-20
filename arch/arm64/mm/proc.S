@@ -64,6 +64,7 @@ ENTRY(cpu_do_suspend)
 	mrs	x2, tpidr_el0
 	mrs	x3, tpidrro_el0
 	mrs	x4, contextidr_el1
+  mrs x13, osdlr_el1
 	mrs	x5, cpacr_el1
 	mrs	x6, tcr_el1
 	mrs	x7, vbar_el1
@@ -73,7 +74,7 @@ ENTRY(cpu_do_suspend)
 	mrs	x11, tpidr_el1
 	mrs	x12, sp_el0
 	stp	x2, x3, [x0]
-	stp	x4, xzr, [x0, #16]
+	stp	x4, x13, [x0, #16]
 	stp	x5, x6, [x0, #32]
 	stp	x7, x8, [x0, #48]
 	stp	x9, x10, [x0, #64]
