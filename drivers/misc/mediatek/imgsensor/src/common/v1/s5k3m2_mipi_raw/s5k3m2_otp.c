@@ -180,7 +180,7 @@ kal_bool start_read_otp(kal_uint8 zone)
     mDELAY(10);
     
 	otp_write_8(0x0A02, 0x1F);   //Set page of OTP (0 ~ 0x15) ... page 31(Dec)
-	zone=zone;
+	zone=(int)zone;
 	otp_write(0x0A00, 0x0100);  //Read Enable
     mDELAY(2);
 	printk("--->>>[3m2_otp] start_read_otp\n");
