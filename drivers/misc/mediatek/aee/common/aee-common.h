@@ -27,10 +27,11 @@ extern void aee_dumpnative(void);
 extern void sysrq_sched_debug_show(void);
 extern void sysrq_sched_debug_show_at_AEE(void);
 #endif
+#ifdef CONFIG_MTK_RAM_CONSOLE
 extern int aee_rr_reboot_reason_show(struct seq_file *m, void *v);
 extern int aee_rr_last_fiq_step(void);
 extern void aee_rr_rec_exp_type(unsigned int type);
-
+#endif
 extern int debug_locks;
 #ifdef WDT_DEBUG_VERBOSE
 extern int dump_localtimer_info(char *buffer, int size);

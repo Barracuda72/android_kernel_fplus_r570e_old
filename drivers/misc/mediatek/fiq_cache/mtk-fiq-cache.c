@@ -24,18 +24,20 @@ void mt_fiq_cache_flush_all(void)
 {
 	mutex_lock(&cache_mutex);
 	trace_printk("[FIQ_CACHE] starts\n");
+#ifdef CONFIG_MTK_RAM_CONSOLE
 	mt_secure_call(MTK_SIP_KERNEL_CACHE_FLUSH_FIQ, 0, 0, 0, 0);
+#endif
 	trace_printk("[FIQ_CACHE] done\n");
 	mutex_unlock(&cache_mutex);
 }
 
 static int __init fiq_cache_init(void)
 {
-
+#ifdef CONFIG_MTK_RAM_CONSOLE
 	mt_secure_call(MTK_SIP_KERNEL_CACHE_FLUSH_INIT,
 		(unsigned long)aee_rr_rec_fiq_cache_step_pa(),
 		0, 0, 0);
-
+#endif
 	return 0;
 }
 module_init(fiq_cache_init);

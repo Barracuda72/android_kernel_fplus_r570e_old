@@ -212,6 +212,12 @@ struct wakeup_source prim_panel_wakelock;
 #else
 struct wake_lock prim_panel_wakelock;
 #endif
+
+#ifdef CONFIG_FRAMEBUFFER_CONSOLE
+extern void console_lock(void);
+extern void console_unlock(void);
+#endif
+
 static void prim_panel_off_delayed_work(struct work_struct *work)
 {
 #ifdef CONFIG_FRAMEBUFFER_CONSOLE
