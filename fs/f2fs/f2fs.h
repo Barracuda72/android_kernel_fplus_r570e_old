@@ -196,7 +196,7 @@ struct cp_control {
 };
 
 /*
- * indicate meta/data type
+ * For CP/NAT/SIT/SSA readahead
  */
 enum {
 	META_CP,
@@ -204,8 +204,6 @@ enum {
 	META_SIT,
 	META_SSA,
 	META_POR,
-	DATA_GENERIC,
-	META_GENERIC,
 };
 
 /* for the list of ino */
@@ -1599,39 +1597,6 @@ static inline int check_nid_range(struct f2fs_sb_info *sbi, nid_t nid)
 	return 0;
 }
 
-#define __is_meta_io(fio) (PAGE_TYPE_OF_BIO(fio->type) == META &&	\
-				(!is_read_io(fio->op) || fio->is_meta))
-
-bool f2fs_is_valid_blkaddr(struct f2fs_sb_info *sbi,
-					block_t blkaddr, int type);
-void f2fs_msg(struct super_block *sb, const char *level, const char *fmt, ...);
-static inline void verify_blkaddr(struct f2fs_sb_info *sbi,
-					block_t blkaddr, int type)
-{
-	if (!f2fs_is_valid_blkaddr(sbi, blkaddr, type)) {
-		f2fs_msg(sbi->sb, KERN_ERR,
-			"invalid blkaddr: %u, type: %d, run fsck to fix.",
-			blkaddr, type);
-		f2fs_bug_on(sbi, 1);
-	}
-}
-
-static inline bool __is_valid_data_blkaddr(block_t blkaddr)
-{
-	if (blkaddr == NEW_ADDR || blkaddr == NULL_ADDR)
-		return false;
-	return true;
-}
-
-static inline bool is_valid_data_blkaddr(struct f2fs_sb_info *sbi,
-						block_t blkaddr)
-{
-	if (!__is_valid_data_blkaddr(blkaddr))
-		return false;
-	verify_blkaddr(sbi, blkaddr, DATA_GENERIC);
-	return true;
-}
-
 /*
  * Check whether the inode has blocks or not
  */
@@ -2549,17 +2514,8 @@ static inline bool is_dot_dotdot(const struct qstr *str)
 
 static inline bool f2fs_may_extent_tree(struct inode *inode)
 {
-	struct f2fs_sb_info *sbi = F2FS_I_SB(inode);
-
-	if (!test_opt(sbi, EXTENT_CACHE) ||
+	if (!test_opt(F2FS_I_SB(inode), EXTENT_CACHE) ||
 			is_inode_flag_set(inode, FI_NO_EXTENT))
-		return false;
-
-	/*
-	 * for recovered files during mount do not create extents
-	 * if shrinker is not registered.
-	 */
-	if (list_empty(&sbi->s_list))
 		return false;
 
 	return S_ISREG(inode->i_mode);

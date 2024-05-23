@@ -1231,7 +1231,6 @@ static int __device_suspend_late(struct device *dev, pm_message_t state, bool as
 		goto Complete;
 
 	if (pm_wakeup_pending()) {
-		dev->power.direct_complete = false;
 		async_error = -EBUSY;
 		goto Complete;
 	}
@@ -1425,10 +1424,8 @@ static int __device_suspend(struct device *dev, pm_message_t state, bool async)
 
 	dpm_wait_for_children(dev, async);
 
-	if (async_error) {
-		dev->power.direct_complete = false;
+	if (async_error)
 		goto Complete;
-	}
 
 	/*
 	 * If a device configured to wake up the system from sleep states
@@ -1449,10 +1446,6 @@ static int __device_suspend(struct device *dev, pm_message_t state, bool async)
 
 	if (dev->power.syscore)
 		goto Complete;
-
-	/* Avoid direct_complete to let wakeup_path propagate. */
-	if (device_may_wakeup(dev) || dev->power.wakeup_path)
-		dev->power.direct_complete = false;
 
 	if (dev->power.direct_complete) {
 		if (pm_runtime_status_suspended(dev)) {

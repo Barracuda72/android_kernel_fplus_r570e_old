@@ -1150,7 +1150,6 @@ static ssize_t ffs_epfile_io(struct file *file, struct ffs_io_data *io_data)
 			 */
 			if (epfile->ep == ep) {
 				usb_ep_dequeue(ep->ep, req);
-        wait_for_completion(done);
 				interrupted = ep->status < 0;
 			}
 			spin_unlock_irq(&epfile->ffs->eps_lock);
@@ -1286,12 +1285,11 @@ static ssize_t ffs_epfile_write_iter(struct kiocb *kiocb, struct iov_iter *from)
 	ENTER();
 
 	if (!is_sync_kiocb(kiocb)) {
-		p = kzalloc(sizeof(io_data), GFP_KERNEL);
+		p = kmalloc(sizeof(io_data), GFP_KERNEL);
 		if (unlikely(!p))
 			return -ENOMEM;
 		p->aio = true;
 	} else {
-		memset(p, 0, sizeof(*p));
 		p->aio = false;
 	}
 
@@ -1323,12 +1321,11 @@ static ssize_t ffs_epfile_read_iter(struct kiocb *kiocb, struct iov_iter *to)
 	ENTER();
 
 	if (!is_sync_kiocb(kiocb)) {
-		p = kzalloc(sizeof(io_data), GFP_KERNEL);
+		p = kmalloc(sizeof(io_data), GFP_KERNEL);
 		if (unlikely(!p))
 			return -ENOMEM;
 		p->aio = true;
 	} else {
-		memset(p, 0, sizeof(*p));
 		p->aio = false;
 	}
 
