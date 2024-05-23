@@ -407,7 +407,11 @@ static void lcm_get_params(struct LCM_PARAMS *params)
 
 		params->width  = FRAME_WIDTH;
 		params->height = FRAME_HEIGHT;
-	//	params->density = 320;//LCM_DENSITY;
+    params->physical_width = 62;
+    params->physical_height = 125;
+    params->physical_width_um = 62476;
+    params->physical_height_um = 124951;
+		params->density = 320;//LCM_DENSITY;
 
 #if LCM_DSI_CMD_MODE
 		params->dsi.mode   = CMD_MODE;
@@ -439,7 +443,7 @@ static void lcm_get_params(struct LCM_PARAMS *params)
 
 
 		// params->dsi.HS_TRAIL=20; 
-		params->dsi.PLL_CLOCK = 212; //320 20200424 //240=4db  230=1.5db
+		params->dsi.PLL_CLOCK = 190; //320 20200424 //240=4db  230=1.5db
 /***********************    esd  check   ***************************/
 //#ifndef BUILD_LK
 	//	params->dsi.esd_check_enable = 1;
