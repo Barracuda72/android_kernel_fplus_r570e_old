@@ -465,51 +465,9 @@ static void lcm_get_params(struct LCM_PARAMS *params)
 
 static unsigned int lcm_compare_id(void)
 {
-     int res = 0;
-	//int i=0;
-    int lcm_vol = 0;
-    int rawdata = 0;
-    int data[4] = {0,0,0,0};
-	//int avg = 3;
-
-	res = IMM_GetOneChannelValue(AUXADC_LCM_VOLTAGE_CHANNEL, data, &rawdata);
-
-
-#ifdef BUILD_LK
-	printf("zgj:[cpu-adc_uboot]: lcm_vol = %d==XXXXX",lcm_vol);
-#else
-	printk("zgj:[cpu-adc_uboot]: lcm_vol = %d==XXXXX",lcm_vol);
-#endif
-
-	
-    if(res < 0)
-    {
-#ifdef BUILD_LK
-        printf("cjx:[adc_uboot]: res = %d, get data error\n",res);
-#else
-        printk("cjx:[adc_kernel]: get data error\n");
-#endif
-        return 0;
-    }
-
-	 lcm_vol = data[0]*1000+data[1]*10;
-#ifdef BUILD_LK
-    printf("zgj:[adc_uboot]: lcm_vol= %d , file : %s, line : %d\n", lcm_vol, __FILE__, __LINE__);
-#else
-    printk("zgj:[adc_kernel]: lcm_vol= %d , file : %s, line : %d\n", lcm_vol, __FILE__, __LINE__);
-#endif
-
-    if (lcm_vol >= MIN_VOLTAGE && lcm_vol <= MAX_VOLTAGE)
-    {
-#ifdef BUILD_LK
-		printf("zgj:lcm->ili9881d_hd1440_dsi_vdo_hsd_hz\n");
-#else
-		printk("zgj:lcm->ili9881d_hd1440_dsi_vdo_hsd_hz\n");
-#endif
-        return 1;
-    }
-    return 0;
+  return 1;
 }
+
 static void lcm_init(void)
 {	
     SET_RESET_PIN(1);
