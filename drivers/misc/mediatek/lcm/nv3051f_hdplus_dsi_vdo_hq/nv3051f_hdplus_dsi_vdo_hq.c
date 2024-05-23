@@ -41,7 +41,7 @@
 
 static struct LCM_UTIL_FUNCS lcm_util = {0};
 
-//#define SET_RESET_PIN(v)    								(lcm_util.set_reset_pin((v)))
+#define SET_RESET_PIN(v)    								(lcm_util.set_reset_pin((v)))
 
 #define UDELAY(n) 											(lcm_util.udelay(n))
 #define MDELAY(n) 											(lcm_util.mdelay(n))
@@ -73,29 +73,32 @@ static struct LCM_setting_table lcm_initialization_setting[] = {
 {0xFF,0x01,{0x01}},
 {0xE3,0x01,{0x04}},	
 {0x08,0x01,{0x0E}},	
-//{0x20,0x01,{0xa0}},//3LANE	
-{0x25,0x01,{0x0a}},	
+{0x24,0x01,{0xa0}},//3LANE	
+{0x25,0x01,{0x24}},	
+{0x26,0x01,{0x1E}},	
+{0x27,0x01,{0x24}},	
 {0x29,0x01,{0xc5}},
 {0x2A,0x01,{0x9F}},	
 {0x2c,0x01,{0x30}},
 {0xce,0x01,{0x02}},	
+{0x30,0x01,{0x58}},	
+{0x45,0x01,{0x91}},	
 {0x37,0x01,{0x9C}},
 {0x38,0x01,{0xA7}},
 {0x39,0x01,{0x17}},//VCOM
 {0x3A,0x01,{0x84}},	
 {0x44,0x01,{0x00}},
-{0x49,0x01,{0x3C}},
+{0x49,0x01,{0x04}},
 {0x4A,0x01,{0x00}},
 {0x50,0x01,{0x18}},
 {0x59,0x01,{0xfe}},
 {0x5C,0x01,{0x00}},
-{0x6D,0x01,{0x00}},
-{0x6E,0x01,{0x00}},
 {0x80,0x01,{0x20}},//2POWER
 {0x99,0x01,{0x51}},
 {0x9b,0x01,{0x5a}},
 {0xA0,0x01,{0x55}},
 {0xA1,0x01,{0x50}},
+{0xA3,0x01,{0x58}},
 {0xA4,0x01,{0x9C}},
 {0xA7,0x01,{0x02}},
 {0xA8,0x01,{0x01}},
@@ -227,7 +230,6 @@ static struct LCM_setting_table lcm_initialization_setting[] = {
 		// Display ON            
 		{0x29, 1, {0x00}}, 
 		{REGFLAG_DELAY, 10, {}},
-	//{0x35,0x01,{0x00}}, 	
 	{REGFLAG_END_OF_TABLE, 0x00, {}}
 };
 static struct LCM_setting_table lcm_deep_sleep_mode_in_setting[] = {
@@ -285,21 +287,25 @@ static void lcm_get_params(struct LCM_PARAMS *params)
 
 		params->width  = FRAME_WIDTH;
 		params->height = FRAME_HEIGHT;
-	//	params->density = 320;//LCM_DENSITY;
+    params->physical_width = 62;
+    params->physical_height = 125;
+    params->physical_width_um = 62476;
+    params->physical_height_um = 124951;
+		params->density = 320;//LCM_DENSITY;
 
 #if LCM_DSI_CMD_MODE
 		params->dsi.mode   = CMD_MODE;
 #else
 		params->dsi.mode   = BURST_VDO_MODE;
 #endif
-		params->dsi.vertical_sync_active = 2;
-		params->dsi.vertical_backporch = 8;
-		params->dsi.vertical_frontporch = 14;
+		params->dsi.vertical_sync_active = 8;
+		params->dsi.vertical_backporch = 28;
+		params->dsi.vertical_frontporch = 10;
 		params->dsi.vertical_active_line = FRAME_HEIGHT; 
 
-		params->dsi.horizontal_sync_active				= 2;	
-		params->dsi.horizontal_backporch				= 44;//50
-		params->dsi.horizontal_frontporch				= 46;  //30 
+		params->dsi.horizontal_sync_active				= 6;	
+		params->dsi.horizontal_backporch				= 30;
+		params->dsi.horizontal_frontporch				= 30;
 		params->dsi.horizontal_active_pixel				= FRAME_WIDTH;
 		params->dsi.LANE_NUM = LCM_FOUR_LANE;
 		params->dbi.te_mode 				= LCM_DBI_TE_MODE_VSYNC_ONLY;
@@ -317,7 +323,7 @@ static void lcm_get_params(struct LCM_PARAMS *params)
 
 
 		// params->dsi.HS_TRAIL=20; 
-		params->dsi.PLL_CLOCK = 214; //320 20200424 //240=4db  230=1.5db
+		params->dsi.PLL_CLOCK = 220; //320 20200424 //240=4db  230=1.5db
 /***********************    esd  check   ***************************/
 //#ifndef BUILD_LK
 	//	params->dsi.esd_check_enable = 1;
@@ -347,7 +353,12 @@ static void lcm_init(void)
     lcm_set_gpio_output(GPIO45,1);
     MDELAY(120);
 #else
-  display_bias_enable();
+    SET_RESET_PIN(1);
+    MDELAY(10);
+    SET_RESET_PIN(0);
+    MDELAY(20);
+    SET_RESET_PIN(1);
+    MDELAY(120);
 #endif
 
 	push_table(lcm_initialization_setting, sizeof(lcm_initialization_setting) / sizeof(struct LCM_setting_table), 1);
@@ -366,7 +377,12 @@ static void lcm_suspend(void)
 	lcm_set_gpio_output(GPIO45,1);
 	MDELAY(120);
   #else
-	display_bias_disable();
+	SET_RESET_PIN(1);
+	MDELAY(1);
+	SET_RESET_PIN(0);
+	MDELAY(1);
+	SET_RESET_PIN(1);
+	MDELAY(120);
   #endif
 	//display_ldo18_enable(0);
 	//`nnnndisplay_ldo28_enable(0);
@@ -385,42 +401,7 @@ static void lcm_resume(void)
 
 static unsigned int lcm_compare_id(void)
 {
-	 #define LCM_ID 0x305202
-    
-    int array[4];
-    char buffer[5];
-    int id = 0;
-
-    //display_ldo18_enable(1);
-	//display_bias_vpos_set(5800);
-	//display_bias_vneg_set(5800);
-	//display_bias_vpos_enable(1);
-	//display_bias_vneg_enable(1);
-   // MDELAY(10);
-   #ifdef BUILD_LK
-    lcm_set_gpio_output(GPIO45,1);
-    MDELAY(10);
-    lcm_set_gpio_output(GPIO45,0);
-    MDELAY(10);
-    lcm_set_gpio_output(GPIO45,1);
-    MDELAY(120);
-    #else
-    // TODO???
-    #endif
-
-    array[0] = 0x00033700; // read id return two byte,version and id
-    dsi_set_cmdq(array, 1, 1);
-    read_reg_v2(0x04, buffer, 3);
-
-    id = (buffer[0] << 16) | (buffer[1] << 8) | buffer[2]; 
-
-#ifdef BUILD_LK
-    printf("cjx: jd9365d %s %d, id = 0x%08x\n", __func__,__LINE__, id);
-#else
-    printk("cjx: jd9365d %s %d, id = 0x%08x\n", __func__,__LINE__, id);
-#endif
-
-    return (id == LCM_ID) ? 1 : 0;
+  return 1;
 }
 
 
