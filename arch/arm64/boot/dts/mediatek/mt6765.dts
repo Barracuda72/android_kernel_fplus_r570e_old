@@ -1761,6 +1761,8 @@ loop.max_part=7 firmware_class.path=/vendor/firmware";
 		ch_offset_default = <0x100>;
 		ch_offset_ccu = <0x200>;
 		mediatek,hs_only;
+    #address-cells = <1>;
+		#size-cells = <0>;
 
     i2c_lcd_bias_mtk: i2c_lcd_bias@3e {
       compatible = "ti,tps65132";
